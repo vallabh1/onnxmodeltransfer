@@ -146,7 +146,7 @@ torch.onnx.export(
     opset_version=12
 )
 
-img = cv2.imread("test/scene.jpg")
+img = cv2.imread("test/scene3.jpg")
 img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 img_tensor = torch.tensor(img.transpose(2, 0, 1)).unsqueeze(0).float()
 
@@ -174,12 +174,12 @@ plt.axis("off")
 
 plt.subplot(1, 4, 2)
 plt.imshow(seg1)
-plt.title("Reference (segmenter)")
+plt.title("original segmenter")
 plt.axis("off")
 
 plt.subplot(1, 4, 3)
 plt.imshow(seg2)
-plt.title("PyTorch Model")
+plt.title("PyTorch wrapper Model")
 plt.axis("off")
 
 plt.subplot(1, 4, 4)
