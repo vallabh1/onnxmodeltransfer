@@ -103,7 +103,7 @@ class FineTunedTSegmenter():
         return pred.squeeze().detach().permute((1,2,0)).contiguous().cpu().numpy()
 
 
-class FineTunedSegformerPreprocessor(nn.Module):
+class FineTunedSegformer_torchnn(nn.Module):
     def __init__(self, model_ckpt="../semanticmapping/finetunedsegmenter/Semantic-3D-Mapping-Uncertainty-Calibration/segmentation_model_checkpoints/Segformer", temperature=1.0):
         super().__init__()
         self.model = SegformerForSemanticSegmentation.from_pretrained(model_ckpt)
@@ -121,15 +121,15 @@ class FineTunedSegformerPreprocessor(nn.Module):
         x = (x - self.mean.to(x.device)) / self.std.to(x.device)
         x = F.interpolate(x, size=self.target_size, mode='bilinear', align_corners=False)
 
-        logits = self.model(pixel_values=x).logits  # [1, C, 512, 512]
-        probs = self.softmax(logits / self.temperature)  # [1, C, 512, 512]
+        logits = self.model(pixel_values=x).logits  
+        probs = self.softmax(logits / self.temperature)  
 
         probs = F.interpolate(probs, size=(orig_h, orig_w), mode='bilinear', align_corners=False)
 
         return torch.argmax(probs, dim=1).squeeze(0).contiguous()  # [H, W]
 
 segmenter = FineTunedTSegmenter()
-model = FineTunedSegformerPreprocessor().eval()
+model = FineTunedSegformer_torchnn().eval()
 
 dummy_input = torch.randint(0, 255, (1, 3, 720, 1280), dtype=torch.float32)
 
@@ -146,16 +146,13 @@ torch.onnx.export(
     opset_version=12
 )
 
-# Load test image
 img = cv2.imread("test/scene.jpg")
 img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 img_tensor = torch.tensor(img.transpose(2, 0, 1)).unsqueeze(0).float()
 
-# Run ONNX Runtime
 session = ort.InferenceSession("fine_tuned_segformer.onnx", providers=["CPUExecutionProvider"])
 onnx_output = session.run(None, {"rgb": img_tensor.numpy()})[0]
 
-# Run PyTorch
 with torch.no_grad():
     torch_output = model(img_tensor).cpu().numpy()
 

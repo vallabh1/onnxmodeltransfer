@@ -121,7 +121,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-class SegformerPreprocessor(nn.Module):
+class Segformer_torchnn(nn.Module):
     def __init__(self, model_ckpt="nvidia/segformer-b4-finetuned-ade-512-512", temperature=1.0):
         super().__init__()
         self.model = SegformerForSemanticSegmentation.from_pretrained(model_ckpt)
@@ -134,7 +134,6 @@ class SegformerPreprocessor(nn.Module):
         self.target_size = (512, 512)
 
     def forward(self, x):
-        # x: [B, 3, H_orig, W_orig], RGB [0–255]
         orig_h, orig_w = x.shape[2], x.shape[3]
 
         x = x / 255.0
@@ -151,8 +150,8 @@ class SegformerPreprocessor(nn.Module):
         return pred.squeeze().detach().cpu()
 
 segmenter = SegformerSegmenter()
-segmenter2 = SegformerPreprocessor().eval()
-model = SegformerPreprocessor().eval()
+segmenter2 = Segformer_torchnn().eval()
+model = Segformer_torchnn().eval()
 
 dummy_input = torch.randint(0, 256, (1, 3, 720, 1280), dtype=torch.float32)
 
