@@ -133,16 +133,17 @@ class Segformer_torchnn(nn.Module):
         self.register_buffer("std", torch.tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1))
         self.target_size = (512, 512)
 
-
-    def forward(self, x):
+    def preprocess(self, x):
         x = x.permute(2, 0, 1).unsqueeze(0).float()
-        orig_h, orig_w = x.shape[2], x.shape[3]
+        
 
         x = x / 255.0
         x = (x - self.mean.to(x.device)) / self.std.to(x.device)
         x = F.interpolate(x, size=(512, 512), mode='bilinear', align_corners=False)
-
-
+        return x
+    def forward(self, x):
+        orig_h, orig_w = x.shape[0], x.shape[1]
+        x = self.preprocess(x)
         logits = self.model(pixel_values=x).logits  # [B, C, 512, 512]
         probs = self.softmax(logits / self.temperature)
 
