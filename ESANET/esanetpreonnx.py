@@ -134,7 +134,6 @@ if __name__ == "__main__":
         out = model(rgb_tensor, depth_tensor)
         print("Output shape:", out.shape)
 
-    # Export
     torch.onnx.export(
         model,
         (rgb_tensor, depth_tensor),
@@ -145,7 +144,6 @@ if __name__ == "__main__":
     )
     
 
-    # # # Wrapper inference
     wrapper = ESANetWrapperWithPreprocessing().eval()
     with torch.no_grad():
         probs = (wrapper(rgb_tensor, depth_tensor))
